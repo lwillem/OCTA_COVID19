@@ -291,7 +291,7 @@ multi_qaly_loss <- function(output_files,
                c(': illness-related QALY',
                ': mortality-related QALY')),
              fill=c('darkred','darkred','lightblue','lightblue'),
-             density=c(200,30,200,30),
+             density=c(30,200,30,200),
              cex=0.8)
       
       # TOTAL
