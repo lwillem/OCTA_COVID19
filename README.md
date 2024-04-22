@@ -44,7 +44,6 @@ We have developed and continuously managed this R project using GitHub for robus
 
 **Where to start?**
 
-### Getting Started:
 To get started with the OCTA model, we recommend beginning with the `R/projections_wave1.R` and `R/projections_contacts.R` file, which provide a basic introduction to running the transmission model. For comprehensive guidance, refer to the `doc/user_manual.pdf`.
 
 To explore further, the `R/projections_uptake.R` and `R/plot_manuscript.R` files contain the simulation and plotting code used for our publication in BMC Public Health (2024). These scripts demonstrate more advanced uses of the model and how to generate outputs for academic dissemination.
