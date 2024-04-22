@@ -1,0 +1,18 @@
+# CRAN Packages
+useful          # used for compare.list
+EpiEstim        # used for Rt calculations
+knitr           # used to convert markdown into pdf
+RColorBrewer    # used for extra colors
+scales          # used for transparent colors (e.g., credible intervals)
+data.table      # used for the data.table format
+zoo             # used for rollmean
+openxlsx        # used to read Excel files
+LaplacesDemon   # used for MCMC
+poisbinom       # used for poison binomial
+socialmixr      # used for social contact data analyses
+EpiLPS          # conditional on R version 4.1.0
+remotes         # used to install packages from GitHub
+
+# GitHub Packages
+lwillem/simid_rtools    # help functions on parallel computing etc.
+brechtdv/EQ5D.be        # Belgian EQ5D package (requires R ≥ 4.1.0)

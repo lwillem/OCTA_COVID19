@@ -1,0 +1,241 @@
+---
+title: "Social contact patterns within the stochastic compartment model"
+author: "Willem, SIMID, et al."
+date: "08/04/2024"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+
+library(socialmixr)
+source('/Users/lwillem/Documents/university/research/social_contacts/repo/socrates_rshiny/R/plot_social_contact_matrix.R')
+source('/Users/lwillem/Documents/university/research/social_contacts/repo/socrates_rshiny/R/npsp/simage.R')
+source('/Users/lwillem/Documents/university/research/social_contacts/repo/socrates_rshiny/R/npsp/splot.R')
+source('/Users/lwillem/Documents/university/research/social_contacts/repo/socrates_rshiny/R/plot_mean_number_contacts.R')
+source('../R/lib_stochastic_model.R')
+source('../R/lib_social_contacts.R')
+
+locations = c("Home","Work","Transport","School","Leisure","Otherplace")
+location_vec_sympt = rbind(rep(1,6),
+                          c(1,0.09,0.13,0.09,0.06,0.25))
+
+comix_all <- readRDS('../data/survey_belgium2020_comix_up_to_wave_47.rds')
+
+# set rng stream
+set.seed(2021)
+
+# age breaks
+age_breaks <- seq(0,80,10)
+
+# symptomatic
+locations = c("Home","Work","Transport","School","Leisure","Otherplace")
+location_vec_sympt = rbind(rep(1,6),
+                          c(1,0.09,0.13,0.09,0.06,0.25))
+opt_filter <- data.frame('cnt_home'       = 1,
+                         'cnt_work'       = 1,
+                         'cnt_transport'  = 1,
+                         'cnt_school'     = 1,
+                         'cnt_leisure'    = 1,
+                         'cnt_otherplace' = 1)
+
+# get population data
+pop_be2020_all <- read.table('../data/pop_be2020_statbel.csv',sep=',',header=T)
+pop_matrix_n10 <- matrix(rep(pop_be2020_all[,3], each = 10),
+                         nrow = 10,
+                         ncol = nrow(pop_be2020_all))
+  
+pop_matrix     <- pop_matrix_n10[1:9,]
+pop_matrix     <- cbind(pop_matrix[,1:8],rowSums(pop_matrix[,9:10]))
+
+```
+
+## CoMix survey data
+
+We utilized the Belgian dataset from the longitudinal social contact survey CoMix for the years 2020-2022 and generated contact matrices for ten age groups using the *socialmixr* package. Owing to data sparsity, our initial analysis employed one aggregated age group for individuals aged 80 years and above. Subsequently, we integrated separate age groups for 80-89 years and 90-99 years. This document outlines the methodology and reasoning behind our approach.
+
+The aim was to generate temporal contact matrices for healthy (and asymptomatic) and symptomatic individuals. For the latter, we used the observed location-specific reductions by Van Kerckhove et al. (2013) during the Influenza H1N1 pandemic in 2009 in the UK. As such, we first aggregated the survey data into location-specific social contact matrices and combined them with or without health-related reduction factors.
+
+If contacts were reported over different locations, for example, child-adult contacts could be reported "at home" and "during transport," we aimed for an aggregated population matrix based on the sum of location-specific matrices. Therefore, contacts had to be attributed to one single location. To achieve this, we used the following order: "Home," "Work," "School," "Transport," "Leisure," "Other place."
+
+For the transmission model, we needed the per-capita number of contacts per day (or per-capita contact rate "c"). As such, $c_{ij}$ corresponded with the contact rate of one susceptible individual of age $i$ with one infectious person of age $j$. This rate was based on the reported daily number of contacts ($m_{ij}$) of participants of age $i$ with a person of age $j$ and the population count of age $j$ ($N_j$). As such, $c_{ij} = m_{ij} / N_j$.
+
+For population-based matrices, we assumed reciprocity of contacts: the overall number of contacts between, for example, a 30-year-old with 80-year-olds, should be the same as the overall number of contacts between an 80-year-old with 30-year-olds. If we translate this into the per-capita contact rate "c", this means that $c_{ij} = c_{ji}$. Starting from the reported contact rates:
+
+$cij = \frac{m_{ij}* N_i  + m_{ji}* N_j }{ 2 * N_i * N_j}$.
+
+Reciprocity for social contacts does not mean that the daily number of contacts $m_{ij}$ and $m_{ji}$ are identical. For instance, in a household of size 3: one child could report 2 unique contacts with adults, while the adults could report only 1 unique contact with a child.
+
+Reciprocity did not hold for location-specific contacts. For example, "contacts at work" for shopkeepers corresponded for their customers with "contacts at other locations". The same was true for contacts reported "at work" and "at school" for teachers and students, respectively.
+
+When dealing with health-specific contact matrices, reciprocity did not hold if the health state for the participant and the contact was different. For example, a symptomatic child might have had more contacts with healthy adults than symptomatic adults with healthy children. 
+\newpage
+Contact rates per capita can also apply to age-specific subgroups if the population denominators are adjusted accordingly. For instance, if we assume 4 contacts between age group $i$ and people of age $j$ years ($N_j$ = 100), and we wish to split this according to $N_{j1} = 75$ and $N_{j2} = 25$ into 3 contacts with ages $j1$ and 1 contact with $j2$, the contact rate for age $i$ with age $j$ remains constant: $m_{ij} = m_{ij1} + m_{ij2}$. This corresponds with:
+
+ * ${c_{ij} = 4/100 = 0.04}$
+ * ${c_{ij1} = 3/75 = 0.04}$
+ * ${c_{ij2} = 1/25 = 0.04}$
+ 
+This method allowed us to divide the reported contacts with individuals aged 80 years and older into two groups: those aged 80-89 years and those aged 90 years and older. The contact rates within the 80+ years category were extrapolated for the contact rates within the 90+ years age group (i.e., $c_{99} = c_{1010}$).
+ 
+## Missing age groups in wave 1-8
+
+The Belgian CoMix survey waves 1-8 were restricted to participants aged 18 years and older. The first limitation is that the reported contacts between participants aged 18-19 years were extrapolated to represent the within-age-group contacts for the full 10-20 years age group. Secondly, to impute contacts with children, we utilized the reported contacts by adults with children, assuming that $c_{ij} = c_{ji}$. To estimate the child-child contacts $c_{11}$, we used $c_{22}$.
+
+## Numerical examples
+The following sections present numerical examples illustrating the transition from reported to imputed contact matrices and the subsequent calculation of contact rates per capita.
+
+
+\newpage
+## Example 1: Child-child contacts for CoMix wave 3 (all locations)
+
+```{r cars}
+i_wave <- 3;i_filter <- 0
+
+# (re)start from all data, and select subset
+comix_sel              <- comix_all 
+comix_sel$participants <- comix_sel$participants[wave == i_wave,] 
+
+# calculate contact matrix with contact rate per participant
+scmxr_out              <- suppressMessages(suppressWarnings(contact_matrix(comix_sel,
+                                           estimated.contact.age = "sample",
+                                           missing.contact.age   = "sample",
+                                           symmetric        = F,
+                                           weigh.dayofweek  = TRUE,
+                                           weigh.age        = TRUE,
+                                           weight.threshold = 3,
+                                           age.limits       = age_breaks,
+                                           filter           = opt_filter[i_filter],
+                                           counts           = F)))
+
+# calculate contact rate per capita (using the reference year)
+if(i_wave == 2010){
+  scmxr_out$matrix_per_capita <- scmxr_out$matrix / matrix(rep(scmxr_out$demography$population,9),ncol=9,byrow=T)
+} else{
+  scmxr_out$matrix_per_capita <- scmxr_out$matrix / pop_matrix
+}
+
+
+# wave 1-8: impute contacts for children 0-10y
+if(is.na(scmxr_out$matrix_per_capita[1,1])){
+  scmxr_out$matrix_per_capita[1,]     <- scmxr_out$matrix_per_capita[,1]
+  scmxr_out$matrix_per_capita[1,1]    <- scmxr_out$matrix_per_capita[2,2]
+}
+
+
+```
+
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Reported per capita contact rates with missing age group."}
+plot_cnt_matrix(scmxr_out$matrix / pop_matrix)
+```
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Imputed per capita contact rates including children."}
+plot_cnt_matrix(scmxr_out$matrix_per_capita)
+```
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Reported contact rates with missing age group."}
+plot_cnt_matrix(scmxr_out$matrix)
+```
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Imputed contact rates including children."}
+plot_cnt_matrix(scmxr_out$matrix_per_capita * pop_matrix)
+```
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Reported contact rates with missing age group."}
+plot_mean_number_contacts(scmxr_out$matrix)
+```
+
+```{r , fig.width=10,fig.height=5,fig.cap="Imputed contact rates including children."}
+plot_mean_number_contacts(scmxr_out$matrix_per_capita * pop_matrix)
+```
+
+\clearpage
+## Example 2: Impute +90y contacts (Wave 3, all locations)
+
+```{r}
+cmat_sy <- scmxr_out$matrix_per_capita
+
+# make symmetric
+## set c_{ij} N_i and c_{ji} N_j (which should both be equal) to
+## 0.5 * their sum; then c_{ij} is that sum / N_i
+weighted.matrix <- as.matrix(cmat_sy) * pop_matrix
+normalised.weighted.matrix <- diag(pop_matrix[1,]) %*% weighted.matrix
+weighted.matrix <- 0.5 * diag(1/pop_matrix[1,]) %*%
+  (normalised.weighted.matrix + t(normalised.weighted.matrix))
+cmat_sy <- weighted.matrix / pop_matrix
+
+# impute contacts with/for elderly +90y
+cmat_sy_n10        <- rbind(cbind(cmat_sy,0),0)
+cmat_sy_n10[,10]   <- cmat_sy_n10[,9] # per capita rate => denominator changes when split age group 9 and 10
+cmat_sy_n10[10,10] <- cmat_sy_n10[9,9] #* pop_matrix_n10[1,9] /  pop_matrix_n10[1,10]
+cmat_sy_n10[10,]   <- cmat_sy_n10[,10] #* pop_matrix_n10[1,10] / pop_matrix_n10[1,]
+  
+```
+
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Reported reciprocal per capita contact rates with age group +80y."}
+plot_cnt_matrix(cmat_sy)
+```
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Imputed reciprocal per capita contact rates with age groups 80-89y and +90y."}
+plot_cnt_matrix(cmat_sy_n10)
+```
+
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Reported reciprocal contact rates with age group +80y."}
+plot_cnt_matrix(cmat_sy * pop_matrix)
+```
+
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Imputed reciprocal contact rates with age groups 80-89y and +90y."}
+plot_cnt_matrix(cmat_sy_n10 * pop_matrix_n10)
+```
+
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Reported reciprocal contact rates with age group +80y."}
+plot_mean_number_contacts(cmat_sy * pop_matrix)
+```
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Imputed reciprocal contact rates with age groups 80-89y and +90y."}
+plot_mean_number_contacts(cmat_sy_n10 * pop_matrix_n10)
+```
+
+\newpage
+## Example 3: Order of imputation and reciprociy (Wave 3, all locations)
+
+We first imputed contacts with and for the elderly aged 90 years and older, and subsequently adopted the principle of reciprocity.
+```{r}
+cmat_sy <- scmxr_out$matrix_per_capita
+
+# 1. impute contacts with/for elderly +90y
+cmat_sy_n10        <- rbind(cbind(cmat_sy,0),0)
+cmat_sy_n10[,10]   <- cmat_sy_n10[,9] # per capita rate => denominator changes when split age group 9 and 10
+cmat_sy_n10[10,10] <- cmat_sy_n10[9,9] #* pop_matrix_n10[1,9] /  pop_matrix_n10[1,10]
+cmat_sy_n10[10,]   <- cmat_sy_n10[,10] #* pop_matrix_n10[1,10] / pop_matrix_n10[1,]
+
+
+# 2. make symmetric
+## set c_{ij} N_i and c_{ji} N_j (which should both be equal) to
+## 0.5 * their sum; then c_{ij} is that sum / N_i
+weighted.matrix <- as.matrix(cmat_sy_n10) * pop_matrix_n10
+normalised.weighted.matrix <- diag(pop_matrix_n10[1,]) %*% weighted.matrix
+weighted.matrix <- 0.5 * diag(1/pop_matrix_n10[1,]) %*%
+  (normalised.weighted.matrix + t(normalised.weighted.matrix))
+cmat_sy_n10 <- weighted.matrix / pop_matrix_n10
+
+  
+```
+
+```{r , fig.width=10,fig.height=4.3,fig.cap="Imputed age-specific per capita contact rates with age groups 80-89y and +90y if reciprocity is applied after the age-specific imputation."}
+plot_cnt_matrix(cmat_sy_n10)
+```
+
+```{r , fig.width=10,fig.height=4.3,fig.cap="Imputed age-specific contact rates with age groups 80-89y and +90y if reciprocity is applied after the age-specific imputation."}
+plot_cnt_matrix(cmat_sy_n10 * pop_matrix_n10)
+```
+
+```{r , fig.width=10,fig.height=4.5,fig.cap="Imputed aggregated contact rates with age groups 80-89y and +90y if reciprocity is applied after the age-specific imputation."}
+plot_mean_number_contacts(cmat_sy_n10 * pop_matrix_n10)
+```
+
