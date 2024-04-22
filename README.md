@@ -52,9 +52,9 @@ To explore further, the `R/projections_uptake.R` and `R/plot_manuscript.R` files
 **Contributors** (in alphabetical order):
 
 * Steven Abrams 
-* Nicolas Franco
 * Philippe Beutels
 * Christel Faes
+* Nicolas Franco
 * Niel Hens
 * Lennert Verboven
 * James Wambua
