@@ -3,14 +3,15 @@
 
 This R project is conceived by members of SIMID group during the COVID-19 pandemic to estimate and explore the effect of social distancing and vaccine uptake in Belgium. OCTA stands for st**O**chastic **C**ompartment model for infec**T**ious dise**A**ses.
 
-Current Version: 1.0.0
+Current Version: 1.0.1
 
 **Scientific output** related to this model:
 
 * [Modeling the early phase of the Belgian COVID-19 epidemic (Abrams et al. Epidemics 2021)](https://doi.org/10.1016/j.epidem.2021.100449)
 * [Technical Notes](https://www.simid.be/news/technical-note-covid19/)
 * [RESTORE reports](https://covid-en-wetenschap.github.io/restore)
-* The impact of quality-adjusted life years on evaluating COVID-19 mitigation strategies: lessons from age-specific vaccination roll-out and variants of concern in Belgium (2020-2022) (Willem et al. BMC Public Health, 2024)
+* [The impact of quality-adjusted life years on evaluating COVID-19 mitigation strategies: lessons from age-specific vaccination roll-out and variants of concern in Belgium (2020-2022) (Willem et al. BMC Public Health, 2024)](https://doi.org/10.1186/s12889-024-18576-w)
+
 
 **GitHub repository**
 
